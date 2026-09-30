@@ -1,0 +1,42 @@
+name: Validate agents
+
+# The point of this file: the validator is useless unless something runs it.
+# See nibzard/awesome-agentic-patterns, which ships a failing validator that no
+# CI job invokes. Wiring it here is the whole point of the contribution.
+#
+# RATCHET — read before removing the next two lines.
+# This job is intentionally non-blocking. As of the commit that introduced it,
+# all nine agents fail validation (10 errors, 5 warnings), so enforcing now
+# would land a permanently red build and train everyone to ignore it.
+#
+# To make it blocking, after the 7 flagged agents are fixed:
+#   1. delete both `continue-on-error: true` lines
+#   2. delete the --strict step if the warnings are not yet worth enforcing
+# The validator is already strict-clean once those fixes land, so no other
+# change is needed.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate agent frontmatter
+        continue-on-error: true
+        run: node scripts/validate-agents.js
+
+      - name: Validate agent frontmatter (strict)
+        continue-on-error: true
+        run: node scripts/validate-agents.js --strict
